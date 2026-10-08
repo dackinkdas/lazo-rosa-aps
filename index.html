@@ -1,0 +1,281 @@
+<title>Lazo Rosa APS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: una sola columna tipo ficha clínica; un lazo rosa que se llena con cada acierto es el marcador de puntaje. */
+:root {
+  --bg: #F6F1F3;
+  --surface: #FFFFFF;
+  --fg: #2B1621;
+  --muted: #74606A;
+  --line: #E6D9DF;
+  --accent: #C2185B;
+  --accent-soft: #FBE3EC;
+  --ribbon-empty: #EBDDE3;
+  --ok: #1E7A62;
+  --ok-soft: #E1F3EC;
+  --bad: #B3261E;
+  --bad-soft: #FBE6E4;
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171014; --surface: #22171D; --fg: #F4E9EE; --muted: #B59FAA; --line: #3A2A32;
+    --accent: #F06A9B; --accent-soft: #3F1E2C; --ribbon-empty: #3A2A32;
+    --ok: #5CC9A7; --ok-soft: #173229; --bad: #F2867D; --bad-soft: #3A1C1A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171014; --surface: #22171D; --fg: #F4E9EE; --muted: #B59FAA; --line: #3A2A32;
+  --accent: #F06A9B; --accent-soft: #3F1E2C; --ribbon-empty: #3A2A32;
+  --ok: #5CC9A7; --ok-soft: #173229; --bad: #F2867D; --bad-soft: #3A1C1A;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 700px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 20px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand small { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.brand b { display: block; font-family: var(--font-display); font-weight: 400; font-size: 24px; line-height: 1.1; }
+.scorebox { display: flex; align-items: center; gap: 14px; font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.scorebox .n { font-size: 22px; font-weight: 600; color: var(--accent); }
+.scorebox .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.mini { width: 34px; height: 44px; }
+
+.progress { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.progress span { height: 6px; border-radius: 3px; background: var(--line); }
+.progress span.ok { background: var(--ok); }
+.progress span.bad { background: var(--bad); }
+.progress span.now { background: var(--accent); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 18px; }
+.meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.chip { background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+h1, h2 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(34px, 7vw, 52px); line-height: 1.02; }
+h2 { font-size: clamp(24px, 4.6vw, 30px); line-height: 1.18; }
+h1 em { color: var(--accent); }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 60ch; }
+
+.opts { display: grid; gap: 10px; }
+.opt { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); transition: border-color .15s, background .15s; }
+.opt:hover:not([disabled]) { border-color: var(--accent); }
+.opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.opt .k { font-family: var(--font-data); font-weight: 600; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); font-size: 13px; }
+.opt[disabled] { cursor: default; }
+.opt.ok { border-color: var(--ok); background: var(--ok-soft); }
+.opt.ok .k { background: var(--ok); color: var(--surface); }
+.opt.bad { border-color: var(--bad); background: var(--bad-soft); }
+.opt.bad .k { background: var(--bad); color: var(--surface); }
+.opt.dim { opacity: .55; }
+
+.fb { border-left: 3px solid var(--ok); padding: 4px 0 4px 14px; display: grid; gap: 4px; }
+.fb.no { border-left-color: var(--bad); }
+.fb strong { color: var(--ok); }
+.fb.no strong { color: var(--bad); }
+
+.row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.btn { all: unset; box-sizing: border-box; cursor: pointer; font-weight: 700; padding: 12px 22px; border-radius: 999px; background: var(--accent); color: var(--surface); text-align: center; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+.btn:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+.intro { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.facts div { border-top: 1px solid var(--line); padding-top: 8px; font-size: 13px; color: var(--muted); }
+.facts b { display: block; font-family: var(--font-data); font-size: 20px; color: var(--fg); font-variant-numeric: tabular-nums; }
+
+.result { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+.big { width: 150px; height: 195px; }
+.final { font-family: var(--font-data); font-size: 54px; font-weight: 600; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.final span { font-size: 20px; color: var(--muted); }
+.level { font-family: var(--font-display); font-size: 28px; font-style: italic; }
+.review { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.review li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 14px; padding-block: 8px; border-bottom: 1px solid var(--line); }
+.review li:last-child { border-bottom: 0; }
+.dot { width: 14px; height: 14px; border-radius: 50%; margin-top: 4px; }
+.review small { display: block; color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); }
+.closing { display: grid; gap: 10px; background: var(--accent-soft); border-radius: 12px; padding: 20px; }
+.closing-title { font-family: var(--font-display); font-size: 28px; line-height: 1.15; color: var(--accent); }
+
+.ribbon-fill rect { transition: y .9s cubic-bezier(.2,.8,.2,1), height .9s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { .ribbon-fill rect, .opt { transition: none; } }
+@media (max-width: 520px) {
+  .intro, .result { grid-template-columns: 1fr; justify-items: start; }
+  .card { padding: 18px; }
+  .facts { grid-template-columns: 1fr 1fr 1fr; }
+}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+const Q = [
+  { cat: "Factores de riesgo", q: "Además del sexo femenino, ¿cuál es el principal factor de riesgo para cáncer de mama?",
+    o: ["El uso de desodorantes con aluminio", "La edad", "El consumo habitual de café", "Los implantes mamarios estéticos"], a: 1,
+    e: "El riesgo aumenta con la edad; la mayoría de los casos se diagnostican después de los 50 años. Desodorantes, café e implantes no han mostrado asociación causal." },
+  { cat: "Factores protectores", q: "¿Cuál de estos factores reduce el riesgo de cáncer de mama?",
+    o: ["Menarquia precoz", "Primer parto después de los 30 años", "Lactancia materna", "Terapia hormonal combinada prolongada"], a: 2,
+    e: "La lactancia materna es protectora y su efecto aumenta con la duración acumulada. Las otras tres opciones aumentan la exposición estrogénica y el riesgo." },
+  { cat: "Detección precoz", q: "Respecto del autoexamen mamario sistemático, la evidencia indica que:",
+    o: ["Reduce la mortalidad tanto como la mamografía", "No ha demostrado reducir la mortalidad; se promueve que la mujer conozca sus mamas y consulte ante cambios", "Debe reemplazar el examen clínico en APS", "Solo es útil en mujeres menores de 30 años"], a: 1,
+    e: "Los ensayos grandes no mostraron menor mortalidad y sí más biopsias benignas. El enfoque actual es el conocimiento de las propias mamas y la consulta oportuna ante cualquier cambio." },
+  { cat: "Tamizaje", q: "En mujeres asintomáticas de riesgo promedio, la mamografía de tamizaje en APS se orienta principalmente a:",
+    o: ["Todas las mujeres desde los 30 años, cada año", "Solo mujeres que presentan síntomas", "Mujeres desde los 50 años, con periodicidad según las orientaciones vigentes", "Ecografía anual desde los 25 años en lugar de mamografía"], a: 2,
+    e: "El tamizaje poblacional se concentra desde los 50 años, donde el beneficio en mortalidad está mejor demostrado. Revisa la periodicidad y el rango de edad en las orientaciones MINSAL vigentes de tu servicio." },
+  { cat: "BI-RADS", q: "Una mamografía informada como BI-RADS 3 requiere habitualmente:",
+    o: ["Biopsia inmediata", "Control imagenológico a corto plazo (alrededor de 6 meses)", "Alta y control en 2 años", "Repetir la mamografía la misma semana"], a: 1,
+    e: "BI-RADS 3 es «probablemente benigno», con riesgo de malignidad menor al 2 %. La conducta es seguimiento a corto plazo para confirmar estabilidad." },
+  { cat: "BI-RADS", q: "Ante una mamografía BI-RADS 4 o 5, la conducta en APS es:",
+    o: ["Derivar a especialidad para estudio histológico (biopsia)", "Repetir mamografía en 6 meses", "Indicar ecografía y esperar resultado antes de derivar", "Tranquilizar y control anual"], a: 0,
+    e: "BI-RADS 4 y 5 son sospechosos de malignidad y requieren confirmación histológica. Derivar sin demora es la acción clave desde APS." },
+  { cat: "Imagenología", q: "Mujer de 28 años consulta por un nódulo palpable en la mama derecha. El primer examen de imagen recomendado es:",
+    o: ["Mamografía bilateral", "Resonancia magnética", "Ecografía mamaria", "Ningún examen; control en un año"], a: 2,
+    e: "En mujeres jóvenes el tejido es denso y la mamografía pierde sensibilidad. La ecografía es la primera elección para evaluar un nódulo palpable." },
+  { cat: "Signos de alarma", q: "¿Cuál de los siguientes hallazgos NO es habitualmente un signo de alarma?",
+    o: ["Retracción reciente del pezón", "Piel de naranja", "Secreción sanguinolenta espontánea y unilateral", "Mastalgia cíclica bilateral"], a: 3,
+    e: "La mastalgia cíclica bilateral suele ser hormonal y benigna. Retracción reciente, piel de naranja y secreción hemática unilateral exigen estudio." },
+  { cat: "Riesgo hereditario", q: "¿Qué antecedente familiar justifica evaluar riesgo hereditario (por ejemplo BRCA1/2)?",
+    o: ["Abuela con cáncer de piel no melanoma a los 80 años", "Madre con cáncer de mama diagnosticado a los 42 años", "Tía con miomas uterinos", "Padre con hipertensión arterial"], a: 1,
+    e: "Familiar de primer grado con cáncer de mama antes de los 50 años es un criterio de sospecha. También lo son el cáncer de ovario, el cáncer de mama bilateral o en un hombre de la familia." },
+  { cat: "Prevención primaria", q: "En la consejería de APS, ¿qué intervención tiene respaldo como prevención primaria?",
+    o: ["Evitar el uso de sostén con barras", "Limitar el consumo de alcohol, mantener actividad física y peso saludable", "Suplementar vitamina C en dosis altas", "Evitar el consumo de soya en toda forma"], a: 1,
+    e: "El alcohol aumenta el riesgo de forma dosis dependiente, y la obesidad posmenopáusica y el sedentarismo también lo elevan. Los otros mitos no tienen respaldo." }
+];
+
+const LEVELS = [
+  { min: 0,   name: "Lazo en construcción", text: "Hay conceptos clave por reforzar. Repasa las explicaciones y vuelve a intentarlo." },
+  { min: 50,  name: "Aliada en prevención", text: "Buena base. Afina los criterios de derivación y la lectura de BI-RADS." },
+  { min: 80,  name: "Referente APS", text: "Dominas la mayoría de los criterios. Puedes apoyar a tu equipo en consejería y derivación." },
+  { min: 100, name: "Lazo completo", text: "Puntaje perfecto. Tu conocimiento sostiene la detección precoz en tu centro." }
+];
+
+let st = { i: -1, score: 0, streak: 0, answers: [] };
+const app = document.getElementById("app");
+let rid = 0;
+
+function ribbon(frac, cls) {
+  const id = "rc" + (rid++);
+  const h = 250 * frac, y = 255 - h;
+  const path = "M48 250 L118 118 C148 62 140 18 100 18 C60 18 52 62 82 118 L152 250";
+  return `<svg class="${cls}" viewBox="0 0 200 260" role="img" aria-label="Lazo rosa lleno al ${Math.round(frac*100)} %">
+    <defs><clipPath id="${id}" class="ribbon-fill"><rect x="0" y="${y}" width="200" height="${h}"></rect></clipPath></defs>
+    <path d="${path}" fill="none" stroke="var(--ribbon-empty)" stroke-width="30" stroke-linejoin="round"></path>
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="30" stroke-linejoin="round" clip-path="url(#${id})"></path>
+  </svg>`;
+}
+
+function header() {
+  const frac = st.score / 100;
+  const bars = Q.map((_, k) => {
+    const a = st.answers[k];
+    const c = a === undefined ? (k === st.i ? "now" : "") : (a.ok ? "ok" : "bad");
+    return `<span class="${c}"></span>`;
+  }).join("");
+  return `<div class="top">
+      <div class="brand">${ribbon(frac, "mini")}<div><small>Atención primaria</small><b>Lazo Rosa APS</b></div></div>
+      <div class="scorebox"><div><div class="l">Puntaje</div><div class="n">${st.score}</div></div><div><div class="l">Racha</div><div class="n">${st.streak}</div></div></div>
+    </div>
+    <div class="progress" aria-hidden="true">${bars}</div>`;
+}
+
+function renderIntro() {
+  app.innerHTML = `<div class="card">
+    <div class="intro">
+      <div style="display:grid;gap:14px;min-width:0">
+        <span class="chip" style="justify-self:start">Prevención de cáncer de mama</span>
+        <h1>Llena el <em>lazo</em> con lo que sabes</h1>
+        <p class="lede">Diez casos y preguntas para equipos de atención primaria: factores de riesgo, tamizaje, BI-RADS, signos de alarma y consejería. Cada respuesta correcta suma 10 puntos y llena el lazo.</p>
+      </div>
+      ${ribbon(0.3, "big")}
+    </div>
+    <div class="facts">
+      <div><b>10</b>preguntas</div>
+      <div><b>100</b>puntos máx.</div>
+      <div><b>~5</b>minutos</div>
+    </div>
+    <div class="row"><button class="btn" id="go">Comenzar</button></div>
+  </div>`;
+  document.getElementById("go").onclick = () => { st = { i: 0, score: 0, streak: 0, answers: [] }; renderQ(); };
+}
+
+function renderQ() {
+  const q = Q[st.i];
+  app.innerHTML = header() + `<div class="card">
+    <div class="meta"><span class="chip">${q.cat}</span><span>Pregunta ${st.i + 1} de ${Q.length}</span></div>
+    <h2>${q.q}</h2>
+    <div class="opts">${q.o.map((t, k) => `<button class="opt" id="opt${k}" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span>${t}</span></button>`).join("")}</div>
+    <div id="fb"></div>
+  </div>`;
+  app.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.k));
+  app.querySelector(".opt").focus({ preventScroll: true });
+}
+
+function answer(k) {
+  const q = Q[st.i], ok = k === q.a;
+  if (ok) { st.score += 10; st.streak += 1; } else { st.streak = 0; }
+  st.answers[st.i] = { ok, k };
+  // refresh header without re-rendering the card
+  const card = app.querySelector(".card");
+  const tmp = document.createElement("div"); tmp.innerHTML = header();
+  app.querySelector(".top").replaceWith(tmp.children[0]);
+  app.querySelector(".progress").replaceWith(tmp.children[0]);
+  card.querySelectorAll(".opt").forEach(b => {
+    const j = +b.dataset.k; b.disabled = true;
+    if (j === q.a) b.classList.add("ok"); else if (j === k) b.classList.add("bad"); else b.classList.add("dim");
+  });
+  const last = st.i === Q.length - 1;
+  const msg = ok ? (st.streak >= 3 ? `Correcto · racha de ${st.streak}` : "Correcto · +10") : `Incorrecto · la respuesta es ${"ABCD"[q.a]}`;
+  document.getElementById("fb").innerHTML = `<div class="fb ${ok ? "" : "no"}" role="status"><strong>${msg}</strong><p>${q.e}</p></div>
+    <div class="row" style="margin-top:16px"><button class="btn" id="next">${last ? "Ver mi resultado" : "Siguiente pregunta"}</button></div>`;
+  const nx = document.getElementById("next");
+  nx.focus({ preventScroll: true });
+  nx.onclick = () => { if (last) renderEnd(); else { st.i++; renderQ(); } };
+}
+
+function renderEnd() {
+  st.i = Q.length;
+  const lv = LEVELS.filter(l => st.score >= l.min).pop();
+  const ok = st.answers.filter(a => a.ok).length;
+  app.innerHTML = header() + `<div class="card">
+    <div class="result">
+      ${ribbon(0, "big")}
+      <div style="display:grid;gap:8px;min-width:0">
+        <span class="chip" style="justify-self:start">Tu resultado</span>
+        <div class="final">${st.score}<span> / 100</span></div>
+        <div class="level">${lv.name}</div>
+        <p class="lede">${ok} de ${Q.length} respuestas correctas. ${lv.text}</p>
+      </div>
+    </div>
+    <div class="closing">
+      <span class="chip" style="justify-self:start">19 de octubre · Día Internacional de la Lucha contra el Cáncer de Mama</span>
+      <p class="closing-title">Gracias por completar el lazo</p>
+      <p>Detrás de cada mamografía solicitada a tiempo, de cada pregunta por antecedentes familiares y de cada derivación oportuna hay una mujer que puede seguir con su vida. Lo que haces en atención primaria es el primer eslabón de la detección precoz.</p>
+      <p><strong>Pregunta, examina, deriva a tiempo.</strong> Comparte esta prueba con tu equipo.</p>
+    </div>
+    <ul class="review">${Q.map((q, k) => {
+      const a = st.answers[k];
+      return `<li><span class="dot" style="background:var(--${a.ok ? "ok" : "bad"})"></span><div>${q.q}<small>${a.ok ? "Correcta" : "Respuesta correcta"}: ${q.o[q.a]}</small></div></li>`;
+    }).join("")}</ul>
+    <div class="row"><button class="btn ghost" id="home">Volver al inicio</button><button class="btn" id="again">Reintentar</button></div>
+    <p class="note">Material educativo. Contrasta los criterios de tamizaje y derivación con la Guía Clínica GES de Cáncer de Mama y las orientaciones MINSAL vigentes.</p>
+  </div>`;
+  // animate the big ribbon filling to the score
+  const rect = app.querySelector(".big rect");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const h = 250 * st.score / 100;
+    rect.setAttribute("y", 255 - h); rect.setAttribute("height", h);
+  }));
+  document.getElementById("again").onclick = () => { st = { i: 0, score: 0, streak: 0, answers: [] }; renderQ(); };
+  document.getElementById("home").onclick = renderIntro;
+}
+
+renderIntro();
+</script>
